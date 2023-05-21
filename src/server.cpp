@@ -17,6 +17,10 @@
 
 using namespace std;
 
+void sigint_handler(int signo) {
+    pthread_exit(NULL);
+}
+
 int main(int argc, char *argv[]) {
     assert(argc == 6);      // Command line arguments must be exactly six
 
@@ -24,18 +28,17 @@ int main(int argc, char *argv[]) {
     int bufferSize = stoi(argv[3]);
     assert(numWorkerThreads > 0);    // numWorkerthreads must be greater than zero
     assert(bufferSize > 0);         // bufferSize must be greater than zero too
-    char *poll_log_name = new char[100], *poll_stats_name = new char[100];
 
+    char *poll_log_name = new char[100], *poll_stats_name = new char[100];
     strcpy(poll_log_name, argv[4]);
     strcpy(poll_stats_name, argv[5]);
 
-    int log_fd = open(poll_log_name, O_RDWR | O_CREAT | O_TRUNC, 0666);
-    int stats_fd = open(poll_stats_name, O_RDWR | O_CREAT | O_TRUNC, 0666);
+    int log_fd = open((string(RESULT_DIR + string(poll_log_name)).c_str()), O_RDWR | O_CREAT | O_TRUNC, 0666);
+    int stats_fd = open((string(RESULT_DIR) + string(poll_stats_name)).c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
 
     // Statistics
-    map<string,string> *votes = new map<string, string>();
-    unsigned int voters = 0;
-
+    map<string,string> *voters_to_votes = new map<string, string>();
+    map<string, int> *parties_to_votes = new map<string, int>();
     int port = stoi(argv[1]), sock;
     struct sockaddr_in server;
 
@@ -67,8 +70,8 @@ int main(int argc, char *argv[]) {
     master_args.buffer = new queue<int>();
     master_args.buffer_size = bufferSize;
     master_args.num_workers_threads = numWorkerThreads;
-    master_args.votes = votes;
-    master_args.voters = &voters;
+    master_args.voters_to_votes = voters_to_votes;
+    master_args.parties_to_votes = parties_to_votes;
     master_args.sock = sock;
     master_args.log_fd = log_fd;
     master_args.stats_fd = stats_fd;
@@ -84,15 +87,22 @@ int main(int argc, char *argv[]) {
         perror("pthread_join on master");
         exit(EXIT_FAILURE);
     }
+    
+    map <string, int>::iterator it;
+    for (it = parties_to_votes->begin(); it != parties_to_votes->end(); it++) {
+        string tmp_str = it->first + " " + to_string(it->second);
 
-    cout << "master thread exited with status : " << status << endl;
+        cout << tmp_str << endl;
+    }
+
 
     close(sock);
     close(log_fd);
     close(stats_fd);
 
     delete(master_args.buffer);
-    delete(votes);
+    delete(voters_to_votes);
+    delete(parties_to_votes);
     delete poll_log_name;
     delete poll_stats_name;
 
@@ -100,13 +110,14 @@ int main(int argc, char *argv[]) {
 }
 
 void* master_routine(void *arguments) {
+    signal(SIGINT, sigint_handler);
     MasterArgs args = *(MasterArgs *)arguments;
 
     WorkerArgs worker_args;
     worker_args.buffer = args.buffer;
     worker_args.buffer_size = args.buffer_size;
-    worker_args.votes = args.votes;
-    worker_args.voters = args.voters;
+    worker_args.voters_to_votes = args.voters_to_votes;
+    worker_args.parties_to_votes = args.parties_to_votes;
     worker_args.log_fd = args.log_fd;
     worker_args.stats_fd = args.stats_fd;
 
@@ -186,7 +197,7 @@ void* worker_routine(void *arguments) {
         read_line_from_fd(sock_fd, voter);
 
         pthread_mutex_lock(&(args->sync_units->log_mutex));
-        if (args->votes->find(string(voter)) != args->votes->end()) {
+        if (args->voters_to_votes->find(string(voter)) != args->voters_to_votes->end()) {
             write(sock_fd, "ALREADY VOTED\n", sizeof("ALREADY VOTED\n"));
             
             delete(voter);
@@ -206,8 +217,8 @@ void* worker_routine(void *arguments) {
 
             // Update poll-log file
             write(args->log_fd, voter_and_party, strlen(voter_and_party) * sizeof(char));   // Update poll-log file
-            (*(args->votes))[string(voter)] = string(party);                                 // Update voters info-stats
-            (*(args->voters))++;
+            (*(args->voters_to_votes))[string(voter)] = string(party);                      // Update voters info-stats
+            (*(args->parties_to_votes))[string(party)]++;
 
             write(sock_fd, "VOTE for Party ", sizeof("VOTE for Party "));
             write(sock_fd, party, strlen(party) * sizeof(char));

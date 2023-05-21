@@ -5,7 +5,9 @@
 #include <map>
 #include <pthread.h>
 
-#define BACKLOG 20
+#define BACKLOG 128
+#define RESULT_DIR "results/"
+
 
 typedef struct {
     pthread_mutex_t buffer_mutex;   // Mutex that protects the buffer of connections
@@ -22,8 +24,8 @@ typedef struct master_args {
     
     int log_fd, stats_fd;
 
-    std::map<std::string, std::string> *votes;
-    unsigned int *voters;
+    std::map<std::string, std::string> *voters_to_votes;
+    std::map<std::string, int> *parties_to_votes;
 
     int sock;   // File descriptor for socket working on
 } MasterArgs;
@@ -34,8 +36,8 @@ typedef struct worker_args {
 
     int log_fd, stats_fd;
 
-    std::map<std::string, std::string> *votes;
-    unsigned int *voters;
+    std::map<std::string, std::string> *voters_to_votes;
+    std::map<std::string, int> *parties_to_votes;
     
     SyncUnits *sync_units;
 

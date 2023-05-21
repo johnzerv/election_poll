@@ -1,6 +1,7 @@
 # Paths
 OBJ_DIR = ./src
 INC_DIR = ./include
+RESULTS_DIR = ./results
 
 # Flags and compiler
 CPPFLAGS = -Wall  -I $(INC_DIR) -lpthread
@@ -28,7 +29,7 @@ $(EXEC_SERVER): $(OBJS)
 
 clean:
 	@echo "Cleaning up ..."
-	@rm -f $(OBJS) $(EXEC_SERVER) poll_*.txt
+	@rm -f $(OBJS) $(EXEC_SERVER) $(RESULTS_DIR)/*
 
 # run: $(EXEC_SERVER)
 # 	./$(EXEC_SERVER)
