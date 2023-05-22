@@ -10,7 +10,9 @@ CC = g++
 # Objects
 OBJ_SERVER = $(OBJ_DIR)/server.o
 OBJ_HELPERS = $(OBJ_DIR)/helpers.o
-OBJS = $(OBJ_SERVER) $(OBJ_HELPERS)
+OBJ_MASTER = $(OBJ_DIR)/master.o
+OBJ_WORKER = $(OBJ_DIR)/worker.o
+OBJS = $(OBJ_SERVER) $(OBJ_HELPERS) $(OBJ_MASTER) $(OBJ_WORKER)
 
 # Executables
 EXEC_SERVER = server

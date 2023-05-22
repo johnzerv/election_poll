@@ -3,11 +3,18 @@
 
 #include <queue>
 #include <map>
+#include <string>
+#include <cstring>
+#include <fcntl.h>
 #include <pthread.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 #define BACKLOG 128
 #define RESULT_DIR "results/"
-
 
 typedef struct {
     pthread_mutex_t buffer_mutex;   // Mutex that protects the buffer of connections
