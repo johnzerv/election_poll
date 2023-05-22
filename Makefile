@@ -4,7 +4,7 @@ INC_DIR = ./include
 RESULTS_DIR = ./results
 
 # Flags and compiler
-CPPFLAGS = -Wall  -I $(INC_DIR) -lpthread
+CPPFLAGS = -Wall -Wno-pointer-arith -I $(INC_DIR) -lpthread
 CC = g++
 
 # Objects

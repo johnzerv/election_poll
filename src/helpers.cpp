@@ -2,28 +2,65 @@
 
 #include "helpers.hpp"
 
-// TODO : read safely
+void read_safely(int fd, void *buf, size_t count) {
+    ssize_t n_bytes = 0;
+
+    for (ssize_t n_read; (size_t)n_bytes < count; ) {
+        if ((n_read = read(fd, buf+n_bytes, count-n_bytes)) < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            
+            perror("read");
+            exit(EXIT_FAILURE);
+        }
+        else {
+            n_bytes += n_read;
+        }
+    }
+}
+
+void write_safely(int fd, void *buf, size_t count) {
+    ssize_t n_bytes = 0;
+
+    for (ssize_t n_written; (size_t)n_bytes < count; ) {
+        if ((n_written = write(fd, buf+n_bytes, count-n_bytes)) < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            
+            perror("read");
+            exit(EXIT_FAILURE);
+        }
+        else {
+            n_bytes += n_written;
+        }
+    }
+}
+
 void read_line_from_fd(int fd, char *str) {
     char ch[1];
     int str_index = 0;
 
+    // Read byte per byte the input until '\r' or '\n'
     do {
-        if (read(fd, ch, 1) < 0) {
-            perror("read");
-            exit(EXIT_FAILURE);
-        }
+        read_safely(fd, ch, 1);
         str[str_index++] = ch[0];
+
+        if ((ch[0] == '\n' || ch[0] == '\r') && str_index == 1) {   // Skip new line at beginning
+            str_index--;
+            ch[0] = -1;
+        }
+
     } while (ch[0] != '\r' && ch[0] != '\n');
 
+    // Special handling on return carriage character
     if (ch[0] == '\r') {  
-        if (read(fd, ch, 1) < 0) {
-            perror("read");
-            exit(EXIT_FAILURE);
-        }
-        str_index--;
+        read_safely(fd, ch, 1); // Just consume '\n'
+        str_index--;            // Do not count '\r'
     }
 
-    str[str_index] = '\0';
+    str[str_index] = '\0';      // Replace '\n' with '\0'
 }
 
 void set_sigint_handler() {
