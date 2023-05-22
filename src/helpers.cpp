@@ -7,7 +7,7 @@ void read_safely(int fd, void *buf, size_t count) {
 
     for (ssize_t n_read; (size_t)n_bytes < count; ) {
         if ((n_read = read(fd, buf+n_bytes, count-n_bytes)) < 0) {
-            if (errno == EINTR) {
+            if (errno == EINTR) {   // Signal received before read anything
                 continue;
             }
             
@@ -25,7 +25,7 @@ void write_safely(int fd, void *buf, size_t count) {
 
     for (ssize_t n_written; (size_t)n_bytes < count; ) {
         if ((n_written = write(fd, buf+n_bytes, count-n_bytes)) < 0) {
-            if (errno == EINTR) {
+            if (errno == EINTR) {       // Signal received before write anything
                 continue;
             }
             
@@ -63,6 +63,10 @@ void read_line_from_fd(int fd, char *str) {
     str[str_index] = '\0';      // Replace '\n' with '\0'
 }
 
+void sigint_handler(int signo) {
+    sigint_received = true;
+}
+
 void set_sigint_handler() {
     struct sigaction act_sigint;
 
@@ -74,18 +78,16 @@ void set_sigint_handler() {
     sigaction(SIGINT, &act_sigint, NULL);
 }
 
-void sigint_handler(int signo) {
-    sigint_received = true;
-}
-
+// Block SIGINT (ctrl-C) signal from a thread (and every thread current thread will create)
 void block_sigint() {
     sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGINT);
+    sigemptyset(&mask);         // Clear the mask
+    sigaddset(&mask, SIGINT);   // Add only SIGINT which we want to block
 
-    pthread_sigmask(SIG_BLOCK, &mask, NULL);
+    pthread_sigmask(SIG_BLOCK, &mask, NULL);    // Block it
 }
 
+// Unblock SIGINT (ctrl-C) signal from a thread likewise above block function
 void unblock_sigint() {
     sigset_t mask;
     sigemptyset(&mask);
