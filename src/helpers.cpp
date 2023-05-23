@@ -2,11 +2,38 @@
 
 #include "helpers.hpp"
 
-void read_safely(int fd, void *buf, size_t count) {
+// Returns total lines of a file
+int get_input_lines(const char *filename) {
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        perror("fopen");
+        exit(EXIT_FAILURE);
+    }
+        
+    int lines = 0;
+    char ch;
+
+    ch = getc(fp);
+    while (ch != EOF) {
+        lines++;
+
+        while ((ch = getc(fp)) != '\n' && ch != EOF);
+    }
+
+    if (fclose(fp) != 0) {
+        perror("fclose");
+        exit(EXIT_FAILURE);
+    }
+
+    return lines - 1;
+}
+
+void read_safely(int fd, const void *buf, size_t count) {
     ssize_t n_bytes = 0;
 
     for (ssize_t n_read; (size_t)n_bytes < count; ) {
-        if ((n_read = read(fd, buf+n_bytes, count-n_bytes)) < 0) {
+        if ((n_read = read(fd, (void*)buf+n_bytes, count-n_bytes)) < 0) {
+            std::cout << "\n\n ERRNO == " << errno << "\n\n";
             if (errno == EINTR) {   // Signal received before read anything
                 continue;
             }
@@ -20,11 +47,11 @@ void read_safely(int fd, void *buf, size_t count) {
     }
 }
 
-void write_safely(int fd, void *buf, size_t count) {
+void write_safely(int fd, const void *buf, size_t count) {
     ssize_t n_bytes = 0;
 
     for (ssize_t n_written; (size_t)n_bytes < count; ) {
-        if ((n_written = write(fd, buf+n_bytes, count-n_bytes)) < 0) {
+        if ((n_written = write(fd, (void*)buf+n_bytes, count-n_bytes)) < 0) {
             if (errno == EINTR) {       // Signal received before write anything
                 continue;
             }
@@ -51,7 +78,6 @@ void read_line_from_fd(int fd, char *str) {
             str_index--;
             ch[0] = -1;
         }
-
     } while (ch[0] != '\r' && ch[0] != '\n');
 
     // Special handling on return carriage character
@@ -60,7 +86,7 @@ void read_line_from_fd(int fd, char *str) {
         str_index--;            // Do not count '\r'
     }
 
-    str[str_index] = '\0';      // Replace '\n' with '\0'
+    str[str_index-1] = '\0';      // Replace '\n' with '\0'
 }
 
 void sigint_handler(int signo) {

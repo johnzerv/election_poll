@@ -18,7 +18,6 @@ int main(int argc, char *argv[]) {
     assert(bufferSize > 0);         // bufferSize must be greater than zero too
 
     set_sigint_handler();           // Define SIGINT handler
-    block_sigint();                 // Block SIGINT from getting handled by server (main) and worker threads (unblock in master thread)
 
     string poll_log_name = argv[4];
     string poll_stats_name = argv[5];
@@ -69,24 +68,30 @@ int main(int argc, char *argv[]) {
     master_args.stats_fd = stats_fd;
 
     if (pthread_create(&master_thread, nullptr, master_routine, (void*)&master_args) != 0) {
-        perror("pthread_create on master");
+        perror("pthread_create on server");
         exit(EXIT_FAILURE);
     }
+
+    block_sigint();      // Block SIGINT from getting handled by server (main) and worker threads (unblock in master thread)
 
     // Wait for master thread
     int status;
     if (pthread_join(master_thread, (void **)&status) != 0) {
-        perror("pthread_join on master");
+        perror("pthread_join on server");
         exit(EXIT_FAILURE);
     }
     
     // Update poll statistics file
     map <string, int>::iterator it;
+    int total_number_of_votes;
     for (it = parties_to_votes->begin(); it != parties_to_votes->end(); it++) {
         string tmp_str = it->first + " " + to_string(it->second) + "\n";
 
-        write(stats_fd, tmp_str.c_str(), sizeof(char) * strlen(tmp_str.c_str()));
+        write_safely(stats_fd, tmp_str.c_str(), sizeof(char) * strlen(tmp_str.c_str()));
+
+        total_number_of_votes += it->second;
     }
+    write_safely(stats_fd, to_string(total_number_of_votes).c_str(), sizeof(char) * (strlen(to_string(total_number_of_votes).c_str())));
 
     close(sock);
     close(log_fd);

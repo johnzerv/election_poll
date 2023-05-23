@@ -5,6 +5,8 @@
 
 
 void* worker_routine(void *arguments) {
+    block_sigint();
+    
     WorkerArgs *args = (WorkerArgs *)arguments;
     
     while (1) {
@@ -15,6 +17,7 @@ void* worker_routine(void *arguments) {
         }
 
         if (sigint_received) {
+            pthread_mutex_unlock(&(args->sync_units->buffer_mutex));
             break;
         }
 
@@ -24,41 +27,38 @@ void* worker_routine(void *arguments) {
         pthread_cond_signal(&(args->sync_units->buffer_nonfull));
         pthread_mutex_unlock(&(args->sync_units->buffer_mutex));
         
-        write(sock_fd, "SEND NAME PLEASE\n", sizeof("SEND NAME PLEASE\n")); // TODO : write_safely
-        char *voter = new char[100];
+        write_safely(sock_fd, "SEND NAME PLEASE\n", sizeof(char) * strlen("SEND NAME PLEASE\n")); // TODO : write_safely
+        char *voter = new char[MAX_VOTER_NAME_LENGTH];
         read_line_from_fd(sock_fd, voter);
 
         pthread_mutex_lock(&(args->sync_units->log_mutex));
         if (args->voters_to_votes->find(std::string(voter)) != args->voters_to_votes->end()) {
-            write(sock_fd, "ALREADY VOTED\n", sizeof("ALREADY VOTED\n"));
+            write_safely(sock_fd, "ALREADY VOTED\n", sizeof(char) * strlen("ALREADY VOTED\n"));
             
             delete(voter);
             close(sock_fd);
         }
         else {
-            write(sock_fd, "SEND VOTE PLEASE\n", sizeof("SEND VOTE PLEASE\n"));
+            write_safely(sock_fd, "SEND VOTE PLEASE\n", sizeof(char) * strlen("SEND VOTE PLEASE\n"));
 
-            char *party = new char[100];
+            char *party = new char[MAX_PARTY_NAME_LENGTH];
             read_line_from_fd(sock_fd, party);
 
-            char *voter_and_party = new char[sizeof(((strlen(voter) + strlen(party)) * sizeof(char)) + 3 * sizeof(char))];    // 3 for : ' ', '\n' and '\0'
-            strcpy(voter_and_party, voter);
-            strcat(voter_and_party, " ");
-            strcat(voter_and_party, party);
-            strcat(voter_and_party, "\n");
+            std::string space = " ";
+            std::string voter_and_party = voter + space + party + "\n";
 
             // Update poll-log file
-            write(args->log_fd, voter_and_party, strlen(voter_and_party) * sizeof(char));   // Update poll-log file
-            (*(args->voters_to_votes))[std::string(voter)] = std::string(party);                      // Update voters info-stats
-            (*(args->parties_to_votes))[std::string(party)]++;
+            write_safely(args->log_fd, voter_and_party.c_str(), strlen(voter_and_party.c_str())  * sizeof(char));   // Update poll-log file
+            (*(args->voters_to_votes))[voter] = party;
+            (*(args->parties_to_votes))[party]++;
 
-            write(sock_fd, "VOTE for Party ", sizeof("VOTE for Party "));
-            write(sock_fd, party, strlen(party) * sizeof(char));
-            write(sock_fd, " RECORDED\n", sizeof(" RECORDED\n"));
+            write_safely(sock_fd, "VOTE for Party ", sizeof(char) * strlen("VOTE for Party "));
+            write_safely(sock_fd, party, strlen(party) * sizeof(char));
+            write_safely(sock_fd, " RECORDED\n", sizeof(char) * strlen(" RECORDED\n"));
 
             delete(voter);
             delete(party);
-            delete(voter_and_party);
+            // delete(voter_and_party);
             close(sock_fd);
         }
         pthread_mutex_unlock(&(args->sync_units->log_mutex));

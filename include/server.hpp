@@ -13,7 +13,9 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#define BACKLOG 128
+#define BACKLOG 20000
+#define MAX_VOTER_NAME_LENGTH 100
+#define MAX_PARTY_NAME_LENGTH 100
 #define RESULT_DIR "results/"
 
 typedef struct {

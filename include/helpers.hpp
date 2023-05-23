@@ -7,10 +7,11 @@
 
 extern bool sigint_received;
 
+int get_input_lines(const char *filename);        // Returns the number of total lines of file with name <filename>
 void read_line_from_fd(int fd, char *str);  // Reads until '\r' or '\n' from a file descriptor
 
-void read_safely(int fd, void *buf, size_t count);
-void write_safely(int fd, void *buf, size_t count);
+void read_safely(int fd, const void *buf, size_t count);
+void write_safely(int fd, const void *buf, size_t count);
 
 void sigint_handler(int signo);
 void set_sigint_handler();  // Setup handler for SIGINT signal

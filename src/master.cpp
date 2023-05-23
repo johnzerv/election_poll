@@ -5,8 +5,6 @@
 #include "helpers.hpp"
 
 void* master_routine(void *arguments) {
-    unblock_sigint();
-
     MasterArgs args = *(MasterArgs *)arguments;
 
     WorkerArgs worker_args;
@@ -29,8 +27,8 @@ void* master_routine(void *arguments) {
     pthread_t worker_threads[args.num_workers_threads];
 
     for (int i = 0; i < args.num_workers_threads; i++) {
-        if (pthread_create(&worker_threads[i], nullptr, worker_routine, (void*)&worker_args) != 0) {
-            perror("pthread_create on worker");
+        if (pthread_create(&(worker_threads[i]), nullptr, worker_routine, (void*)&worker_args) != 0) {
+            perror("pthread_create on master");
             exit(EXIT_FAILURE);
         }
     }
@@ -44,8 +42,11 @@ void* master_routine(void *arguments) {
         // Accept connection
         if ((sock = accept(args.sock, (struct sockaddr *)&client, &client_len)) < 0) {
             if (errno == EINTR) {
-                pthread_cond_broadcast(&(worker_args.sync_units->buffer_nonempty));
-                break;
+                if (sigint_received) {
+                    pthread_cond_broadcast(&(worker_args.sync_units->buffer_nonempty));
+                    pthread_mutex_unlock(&(worker_args.sync_units->buffer_mutex));
+                    break;
+                }
             }
 
             perror("accept");
@@ -58,7 +59,6 @@ void* master_routine(void *arguments) {
             pthread_cond_wait(&(worker_args.sync_units->buffer_nonfull), &(worker_args.sync_units->buffer_mutex));
         }
 
-
         args.buffer->push(sock);
 
         pthread_cond_signal(&(worker_args.sync_units->buffer_nonempty));
@@ -69,7 +69,7 @@ void* master_routine(void *arguments) {
     for (int i = 0; i < args.num_workers_threads; i++) {
         int status;
         if (pthread_join(worker_threads[i], (void **)&status) != 0) {
-            perror("pthread join  on worker threads");
+            perror("pthread join  on master");
             exit(EXIT_FAILURE);
         }
     }
