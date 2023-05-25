@@ -136,6 +136,7 @@ void* voter_routine(void *arguments) {
     }
 
     delete(msg_buffer);
+    // close(sock);
 
     pthread_exit(nullptr);
 }
