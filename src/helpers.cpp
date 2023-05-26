@@ -1,4 +1,6 @@
 #include <csignal>
+#include <cstring>
+#include <arpa/inet.h>
 
 #include "helpers.hpp"
 
@@ -28,12 +30,16 @@ int get_input_lines(const char *filename) {
     return lines - 1;
 }
 
-void read_safely(int fd, const void *buf, size_t count) {
+void read_safely(int fd, const void *buf) {
+    size_t length;
+    read(fd, &length, sizeof(size_t));
+    length = ntohl(length);    
+
     ssize_t n_bytes = 0;
 
-    for (ssize_t n_read; (size_t)n_bytes < count; ) {
-        if ((n_read = read(fd, (void*)buf+n_bytes, count-n_bytes)) < 0) {
-            std::cout << "\n\n ERRNO == " << errno << "\n\n";
+    for (ssize_t n_read; (size_t)n_bytes < length; ) {
+        if ((n_read = read(fd, (void*)buf+n_bytes, length-n_bytes)) < 0) {
+            // std::cout << "\n\n ERRNO == " << errno << "\n\n";
             if (errno == EINTR) {   // Signal received before read anything
                 continue;
             }
@@ -48,7 +54,10 @@ void read_safely(int fd, const void *buf, size_t count) {
 }
 
 void write_safely(int fd, const void *buf, size_t count) {
+    size_t length = htonl(count);
+    write(fd, &length, sizeof(size_t));
     ssize_t n_bytes = 0;
+
 
     for (ssize_t n_written; (size_t)n_bytes < count; ) {
         if ((n_written = write(fd, (void*)buf+n_bytes, count-n_bytes)) < 0) {
@@ -71,7 +80,7 @@ void read_line_from_fd(int fd, char *str) {
 
     // Read byte per byte the input until '\r' or '\n'
     do {
-        read_safely(fd, ch, 1);
+        read(fd, ch, 1);
         str[str_index++] = ch[0];
 
         if ((ch[0] == '\n' || ch[0] == '\r') && str_index == 1) {   // Skip new line at beginning
@@ -82,7 +91,7 @@ void read_line_from_fd(int fd, char *str) {
 
     // Special handling on return carriage character
     if (ch[0] == '\r') {  
-        read_safely(fd, ch, 1); // Just consume '\n'
+        read(fd, ch, 1); // Just consume '\n'
         str_index--;            // Do not count '\r'
     }
 

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <cstring>
+#include <string>
 #include <fcntl.h>
 
 #include <stdio.h>
@@ -57,11 +58,14 @@ int main(int argc, char *argv[]) {
         voter_args[i].lastname = string(voter_lastname);
 
         // Extract the party voter voted
-        char *party = new char [100];
-        if ((party = strtok(nullptr, " ")) == nullptr) {
-            perror("Wrong format of input file");
-            exit(EXIT_FAILURE);
+        char *party = new char [100], *token = new char[50];
+        strcpy(party, "");
+        while ((token = strtok(nullptr, " ")) != nullptr) {
+            strcat(party, token);
+            strcat(party, " ");
         }
+        party[strlen(party)-1] = '\0';
+
         voter_args[i].party = string(party);
 
         // Create a voter-thread that votes the party he/she wants
@@ -69,6 +73,12 @@ int main(int argc, char *argv[]) {
             perror("pthread_create on client");
             exit(EXIT_FAILURE);
         }
+
+        delete vote;
+        delete voter_firstname;
+        delete voter_lastname;
+        delete party;
+        delete token;
     }
 
     for (int i = 0; i < num_lines; i++) {
@@ -79,6 +89,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    close(input_fd);
     return 0;
 }
 
@@ -111,32 +122,39 @@ void* voter_routine(void *arguments) {
 
     cout << "Connecting to " << args->server_name << " port " << port << endl;
     
-    string voter_name = args->firstname + " " + args->lastname + "\n";
+    string voter_name = args->firstname + " " + args->lastname;
 
     char *msg_buffer = new char[sizeof(char) * MAX_MSG_LENGTH];
 
-    read_line_from_fd(sock, msg_buffer);
-    if (strcmp(msg_buffer, "SEND NAME PLEASE")) {
-        perror("Wrong message from server");
-        exit(EXIT_FAILURE);
-    }
+    read_safely(sock, msg_buffer);
+    // if (strcmp(msg_buffer, "SEND NAME PLEASE")) {
+    //     perror("Wrong message from server");
+    //     exit(EXIT_FAILURE);
+    // }
 
     write_safely(sock, (void*)voter_name.c_str(), sizeof(char) * (strlen(voter_name.c_str())));
 
-    read_line_from_fd(sock, msg_buffer);
+    read_safely(sock, msg_buffer);
 
     if (strcmp(msg_buffer, "ALREADY VOTED")) {
-        if (strcmp(msg_buffer, "SEND VOTE PLEASE")) {
-            perror("Wrong message from server");
-            exit(EXIT_FAILURE);
-        }
+        // if (strcmp(msg_buffer, "SEND VOTE PLEASE")) {
+        //     perror("Wrong message from server");
+        //     exit(EXIT_FAILURE);
+        // }
 
-        string party = args->party + "\n";
+        string party = args->party;
         write_safely(sock, (void*)party.c_str(), sizeof(char) * (strlen(party.c_str())));
     }
 
+    read_safely(sock, msg_buffer);
+
     delete(msg_buffer);
-    // close(sock);
+
+    if (shutdown(sock, SHUT_RDWR) < 0) {
+        perror("shutdown");
+        exit(EXIT_FAILURE);
+    }
+    close(sock);
 
     pthread_exit(nullptr);
 }
