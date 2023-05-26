@@ -38,32 +38,36 @@ int main(int argc, char *argv[]) {
         voter_args[i].port = port;
 
         // Read the current line from the file
-        char *vote = new char[200];
+        char *vote_tmp = new char[200], *vote = vote;
         read_line_from_fd(input_fd, vote);
 
         // Extract the firstname of voter
-        char *voter_firstname = new char[100];
-        if ((voter_firstname = strtok(vote, " ")) == nullptr) {
+        char *voter_firstname;
+        if ((voter_firstname = strtok(vote_tmp, " ")) == nullptr) {
             perror("Wrong format of input file");
             exit(EXIT_FAILURE);
         }
         voter_args[i].firstname = string(voter_firstname);
 
         // Extract the lastname of voter
-        char *voter_lastname = new char[100];
+        char *voter_lastname;
         if ((voter_lastname = strtok(nullptr, " ")) == nullptr) {
             perror("Wrong format of input file");
             exit(EXIT_FAILURE);
         }
         voter_args[i].lastname = string(voter_lastname);
 
+
+        // TODO : support parties with spaces
         // Extract the party voter voted
-        char *party = new char [100], *token = new char[50];
-        strcpy(party, "");
-        while ((token = strtok(nullptr, " ")) != nullptr) {
-            strcat(party, token);
-            strcat(party, " ");
-        }
+        char *party;
+        // strcpy(tmp, "");
+        // while ((token = strtok(nullptr, " ")) != nullptr) {
+        //     strcat(party, token);
+        //     strcat(tmp, " ");
+        // }
+        party = strtok(nullptr, " ");
+        // strcpy(party, tmp);
         party[strlen(party)-1] = '\0';
 
         voter_args[i].party = string(party);
@@ -75,10 +79,6 @@ int main(int argc, char *argv[]) {
         }
 
         delete vote;
-        delete voter_firstname;
-        delete voter_lastname;
-        delete party;
-        delete token;
     }
 
     for (int i = 0; i < num_lines; i++) {
