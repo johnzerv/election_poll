@@ -1,13 +1,15 @@
 #!/bin/bash
 
 # Check if  inputFile exists
-if ! [ -e inputFile ]; then
+input_file="../results/inputFile"
+
+if ! [ -e $input_file ]; then
     echo "inputFile doesn't exist"
     exit -1
 fi
 
 # Check if inputFile exists
-if ! [ -r inputFile ]; then
+if ! [ -r $input_file ]; then
     echo "inputFile doesn't have read permissions"
     exit -1
 fi
@@ -21,14 +23,14 @@ fi
 
 touch "$output_file"    # Create file with given name
 
-num_input_lines=$(wc -l < inputFile)   # Get number lines of input file
+num_input_lines=$(wc -l < $input_file)   # Get number lines of input file
 
 declare -A parties_to_votes   # Associative array (map) that holds number of votes for each party
 declare -A voters
 
 # Loop over the lines of inputFile
 for ((i=1; i <= num_input_lines; i++)) do
-    curr_line=$(head -$i inputFile| tail -1)    # Extract the current line
+    curr_line=$(head -$i $input_file| tail -1)    # Extract the current line
 
     # firstname=$(echo $curr_line | cut -d ' ' -f 1)  # Extract first column (firstname)
     # lastname=$(echo $curr_line | cut -d ' ' -f 2)   # Extract second column (lastname)

@@ -72,7 +72,7 @@ void read_line_from_fd(int fd, char *str) {
     char ch[1];
     int str_index = 0;
 
-    // Read byte per byte the input until '\r' or '\n'
+    // Read byte per byte the input until '\r' or '\n' will be appeared
     do {
         read_safely(fd, ch, 1);
         str[str_index++] = ch[0];

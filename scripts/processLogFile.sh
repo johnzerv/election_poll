@@ -7,8 +7,8 @@ if ! [ -e $1 ]; then
 fi
 
 # Check if given file in first argument exists
-if ! [ -r inputFile ]; then
-    echo "inputFile doesn't have read permissions"
+if ! [ -r $1 ]; then
+    echo "$1 doesn't have read permissions"
     exit -1
 fi
 
