@@ -18,25 +18,29 @@ bool sigint_received = false;   // For sake of compilation, reduntant in client
 int main(int argc, char *argv[]) {
     assert(argc == 4);  // Number of command line arguments must be 4
 
+    // Command line args
     string server_name = argv[1];
     int port = stoi(argv[2]);
     string input_file_name = argv[3];
 
-    int num_lines = get_input_lines(input_file_name.c_str());
+    int num_lines = get_input_lines(input_file_name.c_str());   // Number of total lines of given file
+
+    // Pthread's info
     pthread_t voters[num_lines];
     VoterArgs voter_args[num_lines];
 
     int input_fd = open(input_file_name.c_str(), O_RDONLY, 0666);
 
+    // For each line in given file, create a struct of arguments and create a thread-voter to handle the vote-line
     for (int i = 0; i < num_lines; i++) {
         voter_args[i].server_name = server_name;
         voter_args[i].port = port;
 
         // Read the current line from the file
-        char *vote_tmp = new char[sizeof(char) * MAX_MSG_LENGTH], *vote = vote_tmp;
+        char *vote_tmp = new char[sizeof(char) * MAX_MSG_LENGTH], *vote = vote_tmp; // Keep the initial pointer in order to delete it correctly afterwards
         read_line_from_fd(input_fd, vote);
 
-        // Extract the firstname of voter
+        // Extract the firstname of voter and update voter's arguments
         char *voter_firstname;
         if ((voter_firstname = strtok(vote_tmp, " ")) == nullptr) {
             perror("Wrong format of input file");
@@ -44,7 +48,7 @@ int main(int argc, char *argv[]) {
         }
         voter_args[i].firstname = string(voter_firstname);
 
-        // Extract the lastname of voter
+        // Extract the lastname of voter and update voter's arguments
         char *voter_lastname;
         if ((voter_lastname = strtok(nullptr, " ")) == nullptr) {
             perror("Wrong format of input file");
@@ -52,14 +56,15 @@ int main(int argc, char *argv[]) {
         }
         voter_args[i].lastname = string(voter_lastname);
 
-        // Extract the party voter voted
+        // Extract the party voter voted and update voter's arguments
         char *party = new char[sizeof(char) * MAX_MSG_LENGTH], *party_token;
         if ((party_token = strtok(nullptr, " ")) == nullptr) {
             perror("Wrong format of input file");
             exit(EXIT_FAILURE);
         }
         strcpy(party, party_token);
-
+        
+        // Consider that a party might have multiple words on his name
         while ((party_token = strtok(nullptr, " ")) != nullptr) {
             strcat(party, " ");
             strcat(party, party_token);

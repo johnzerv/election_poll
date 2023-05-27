@@ -53,7 +53,6 @@ int main(int argc, char *argv[]) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
-    cout << "Listening for connections to port " << port << endl;
     
     // Create master thread and args
     pthread_t master_thread;
@@ -72,7 +71,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    block_sigint();      // Block SIGINT from getting handled by server (main) and worker threads (unblock in master thread)
+    block_sigint();      // Block SIGINT from getting handled by server (main) and worker threads (only master thread doesn't block it)
 
     // Wait for master thread
     int status;
@@ -99,6 +98,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     close(sock);
+    
     close(log_fd);
     close(stats_fd);
 
