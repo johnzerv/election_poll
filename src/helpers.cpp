@@ -30,16 +30,11 @@ int get_input_lines(const char *filename) {
     return lines - 1;
 }
 
-size_t read_safely(int fd, const void *buf) {
-    size_t length;
-    read(fd, &length, sizeof(size_t));
-    length = ntohl(length);    
-
+size_t read_safely(int fd, const void *buf, size_t length) {
     ssize_t n_bytes = 0;
 
     for (ssize_t n_read; (size_t)n_bytes < length; ) {
         if ((n_read = read(fd, (void*)buf+n_bytes, length-n_bytes)) < 0) {
-            // std::cout << "\n\n ERRNO == " << errno << "\n\n";
             if (errno == EINTR) {   // Signal received before read anything
                 continue;
             }
@@ -55,11 +50,7 @@ size_t read_safely(int fd, const void *buf) {
     return length;
 }
 
-void write_safely(int fd, const void *buf, size_t count, bool no_length) {
-    if (!no_length) {
-        size_t length = htonl(count);
-        write(fd, &length, sizeof(size_t));
-    }
+void write_safely(int fd, const void *buf, size_t count) {
     ssize_t n_bytes = 0;
 
     for (ssize_t n_written; (size_t)n_bytes < count; ) {
@@ -83,7 +74,7 @@ void read_line_from_fd(int fd, char *str) {
 
     // Read byte per byte the input until '\r' or '\n'
     do {
-        read(fd, ch, 1);
+        read_safely(fd, ch, 1);
         str[str_index++] = ch[0];
 
         if ((ch[0] == '\n' || ch[0] == '\r') && str_index == 1) {   // Skip new line at beginning
@@ -94,7 +85,7 @@ void read_line_from_fd(int fd, char *str) {
 
     // Special handling on return carriage character
     if (ch[0] == '\r') {  
-        read(fd, ch, 1); // Just consume '\n'
+        read_safely(fd, ch, 1); // Just consume '\n'
         str_index--;            // Do not count '\r'
     }
 

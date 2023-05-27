@@ -11,7 +11,7 @@ int get_input_lines(const char *filename);   // Returns the number of total line
 void read_line_from_fd(int fd, char *str);  // Reads until '\r' or '\n' from a file descriptor
 
 size_t read_safely(int fd, const void *buf);
-void write_safely(int fd, const void *buf, size_t count, bool no_length);
+void write_safely(int fd, const void *buf, size_t count);
 
 void sigint_handler(int signo);
 void set_sigint_handler();  // Setup handler for SIGINT signal

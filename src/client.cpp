@@ -120,22 +120,19 @@ void* voter_routine(void *arguments) {
         exit(EXIT_FAILURE);
     }
     
-    string voter_name = args->firstname + " " + args->lastname;
+    string voter_name = args->firstname + " " + args->lastname + "\n";
 
     char *msg_buffer = new char[sizeof(char) * MAX_MSG_LENGTH];
-    size_t msg_length;
 
-    msg_length = read_safely(sock, msg_buffer);  // Server's message : SEND NAME PLEASE
-    msg_buffer[msg_length] = '\0';
+    read_line_from_fd(sock, msg_buffer);  // Server's message : SEND NAME PLEASE
     if (strcmp(msg_buffer, "SEND NAME PLEASE")) {
         perror("Wrong message from server");
         exit(EXIT_FAILURE);
     }
 
-    write_safely(sock, (void*)voter_name.c_str(), sizeof(char) * (strlen(voter_name.c_str())), false);
+    write_safely(sock, (void*)voter_name.c_str(), sizeof(char) * (strlen(voter_name.c_str())));
 
-    msg_length = read_safely(sock, msg_buffer);  // Server's message : SEND VOTE PLEASE or ALREADY VOTED
-    msg_buffer[msg_length] = '\0';
+    read_line_from_fd(sock, msg_buffer);  // Server's message : SEND VOTE PLEASE or ALREADY VOTED
 
     if (strcmp(msg_buffer, "ALREADY VOTED")) {
         if (strcmp(msg_buffer, "SEND VOTE PLEASE")) {
@@ -143,10 +140,10 @@ void* voter_routine(void *arguments) {
             exit(EXIT_FAILURE);
         }
 
-        string party = args->party;
-        write_safely(sock, (void*)party.c_str(), sizeof(char) * (strlen(party.c_str())), false);
+        string party = args->party + "\n";
+        write_safely(sock, (void*)party.c_str(), sizeof(char) * (strlen(party.c_str())));
 
-        read_safely(sock, msg_buffer);  // Server's last message
+        read_line_from_fd(sock, msg_buffer);  // Server's last message
     }
 
     delete(msg_buffer);
