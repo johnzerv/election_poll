@@ -30,7 +30,7 @@ int get_input_lines(const char *filename) {
     return lines - 1;
 }
 
-void read_safely(int fd, const void *buf) {
+size_t read_safely(int fd, const void *buf) {
     size_t length;
     read(fd, &length, sizeof(size_t));
     length = ntohl(length);    
@@ -51,13 +51,16 @@ void read_safely(int fd, const void *buf) {
             n_bytes += n_read;
         }
     }
+
+    return length;
 }
 
-void write_safely(int fd, const void *buf, size_t count) {
-    size_t length = htonl(count);
-    write(fd, &length, sizeof(size_t));
+void write_safely(int fd, const void *buf, size_t count, bool no_length) {
+    if (!no_length) {
+        size_t length = htonl(count);
+        write(fd, &length, sizeof(size_t));
+    }
     ssize_t n_bytes = 0;
-
 
     for (ssize_t n_written; (size_t)n_bytes < count; ) {
         if ((n_written = write(fd, (void*)buf+n_bytes, count-n_bytes)) < 0) {

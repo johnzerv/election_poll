@@ -3,7 +3,7 @@
 
 #include <string>
 
-#define MAX_MSG_LENGTH 100
+#define MAX_MSG_LENGTH 200
 
 typedef struct voter_args {
     std::string firstname;

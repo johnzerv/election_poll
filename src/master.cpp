@@ -52,7 +52,6 @@ void* master_routine(void *arguments) {
             perror("accept");
             exit(EXIT_FAILURE);
         }
-        std::cout << "Accepted connection" << std::endl;
 
         pthread_mutex_lock(&(worker_args.sync_units->buffer_mutex));
         while (args.buffer->size() >= args.buffer_size) {

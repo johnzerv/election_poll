@@ -87,11 +87,11 @@ int main(int argc, char *argv[]) {
     for (it = parties_to_votes->begin(); it != parties_to_votes->end(); it++) {
         string tmp_str = it->first + " " + to_string(it->second) + "\n";
 
-        write(stats_fd, tmp_str.c_str(), sizeof(char) * strlen(tmp_str.c_str()));
+        write_safely(stats_fd, tmp_str.c_str(), sizeof(char) * strlen(tmp_str.c_str()), true);
 
         total_number_of_votes += it->second;
     }
-    write(stats_fd, to_string(total_number_of_votes).c_str(), sizeof(char) * (strlen(to_string(total_number_of_votes).c_str())));
+    write_safely(stats_fd, to_string(total_number_of_votes).c_str(), sizeof(char) * (strlen(to_string(total_number_of_votes).c_str())), true);
 
 
     if (shutdown(sock, SHUT_RDWR) < 0) {

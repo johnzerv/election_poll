@@ -27,8 +27,8 @@ typedef struct {
 } SyncUnits;
 
 typedef struct master_args {
-    std::queue<int> *buffer;
-    size_t buffer_size;
+    std::queue<int> *buffer;    // Buffer with connections
+    size_t buffer_size;         // Max connections that buffer can hold
     int num_workers_threads;
     
     int log_fd, stats_fd;
@@ -48,10 +48,9 @@ typedef struct worker_args {
     std::map<std::string, std::string> *voters_to_votes;
     std::map<std::string, int> *parties_to_votes;
     
-    SyncUnits *sync_units;
+    SyncUnits *sync_units;  // All mutexes and condition variables that are needed for synchronization
 
 } WorkerArgs;
-
 
 void* master_routine(void *arguments);
 void* worker_routine(void *arguments);
