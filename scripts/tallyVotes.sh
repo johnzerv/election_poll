@@ -57,4 +57,4 @@ for key in "${!parties_to_votes[@]}"; do    # Using @ instead of * to include pa
     echo "$key ${parties_to_votes[$key]}"  >> "$output_file"
 done
 
-echo > "$output_file"    # New line at the end of the file
+echo >> "$output_file"    # New line at the end of the file
