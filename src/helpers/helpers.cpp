@@ -89,7 +89,7 @@ void read_line_from_fd(int fd, char *str) {
         str_index--;            // Do not count '\r'
     }
 
-    str[str_index-1] = '\0';      // Replace '\n' with '\0'
+    str[str_index] = '\0';      // Replace '\n' with '\0'   
 }
 
 void sigint_handler(int signo) {
