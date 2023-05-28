@@ -52,3 +52,4 @@ done
 for key in "${!parties_to_votes[@]}"; do    # Using @ instead of * to include parties with character space
     echo "$key ${parties_to_votes[$key]}"  >> "$output_file"
 done
+echo >> "$output_file"  # New line at the end of the file
