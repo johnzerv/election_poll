@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     block_sigint();      // Block SIGINT from getting handled by server (main) and worker threads (only master thread doesn't block it)
 
     // Wait for master thread
-    int status;
+    void *status;
     if (pthread_join(master_thread, (void **)&status) != 0) {
         perror("pthread_join on server");
         exit(EXIT_FAILURE);

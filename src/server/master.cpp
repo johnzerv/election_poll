@@ -70,7 +70,7 @@ void* master_routine(void *arguments) {
 
     // Wait for all worker threads to finish their jobs
     for (int i = 0; i < args.num_workers_threads; i++) {
-        int status;
+        void *status;
         if (pthread_join(worker_threads[i], (void **)&status) != 0) {
             perror("pthread join  on master");
             exit(EXIT_FAILURE);

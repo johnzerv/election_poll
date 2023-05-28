@@ -86,10 +86,10 @@ void read_line_from_fd(int fd, char *str) {
     // Special handling on return carriage character
     if (ch[0] == '\r') {  
         read_safely(fd, ch, 1); // Just consume '\n'
-        str_index--;            // Do not count '\r'
+        // str_index--;            // Do not count '\r'
     }
 
-    str[str_index] = '\0';      // Replace '\n' with '\0'   
+    str[str_index-1] = '\0';      // Replace '\n' with '\0'   
 }
 
 void sigint_handler(int signo) {

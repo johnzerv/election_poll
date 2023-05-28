@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     }
 
     for (int i = 0; i < num_lines; i++) {
-        int status;
+        void *status;
         if (pthread_join(voters[i], (void **)&status) != 0) {
             perror("pthread join on clinet");
             exit(EXIT_FAILURE);
