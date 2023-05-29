@@ -50,11 +50,11 @@ size_t read_safely(int fd, const void *buf, size_t length) {
     return length;
 }
 
-void write_safely(int fd, const void *buf, size_t count) {
+void write_safely(int fd, const void *buf, size_t length) {
     ssize_t n_bytes = 0;
 
-    for (ssize_t n_written; (size_t)n_bytes < count; ) {
-        if ((n_written = write(fd, (void*)buf+n_bytes, count-n_bytes)) < 0) {
+    for (ssize_t n_written; (size_t)n_bytes < length; ) {
+        if ((n_written = write(fd, (void*)buf+n_bytes, length-n_bytes)) < 0) {
             if (errno == EINTR) {       // Signal received before write anything
                 continue;
             }
@@ -86,7 +86,6 @@ void read_line_from_fd(int fd, char *str) {
     // Special handling on return carriage character
     if (ch[0] == '\r') {  
         read_safely(fd, ch, 1); // Just consume '\n'
-        // str_index--;            // Do not count '\r'
     }
 
     str[str_index-1] = '\0';      // Replace '\n' with '\0'   
@@ -114,13 +113,4 @@ void block_sigint() {
     sigaddset(&mask, SIGINT);   // Add only SIGINT which we want to block
 
     pthread_sigmask(SIG_BLOCK, &mask, NULL);    // Block it
-}
-
-// Unblock SIGINT (ctrl-C) signal from a thread likewise above block function
-void unblock_sigint() {
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGINT);
-
-    pthread_sigmask(SIG_UNBLOCK, &mask, NULL);
 }
