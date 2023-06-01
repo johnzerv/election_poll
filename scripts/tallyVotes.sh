@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if  inputFile exists
-input_file="../results/inputFile"
+input_file="../input/inputFile"
 
 if ! [ -e $input_file ]; then
     echo "inputFile doesn't exist"
@@ -62,3 +62,5 @@ for key in "${!parties_to_votes[@]}"; do    # Using @ instead of * to include pa
 done
 
 echo >> "$output_file"    # New line at the end of the file
+
+sort $output_file > $output_file

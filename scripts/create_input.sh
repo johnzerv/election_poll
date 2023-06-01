@@ -18,7 +18,7 @@ if [ $2 -lt 1 ]; then
     exit -1
 fi
 
-output_file="../results/inputFile"
+output_file="../input/inputFile"
 
 # If inputFile exists, remove it
 if [ -e "$output_file" ]; then
