@@ -32,8 +32,12 @@ declare -A voters
 for ((i=1; i <= num_input_lines; i++)) do
     curr_line=$(head -$i $input_file| tail -1)    # Extract the current line
 
-    # firstname=$(echo $curr_line | cut -d ' ' -f 1)  # Extract first column (firstname)
-    # lastname=$(echo $curr_line | cut -d ' ' -f 2)   # Extract second column (lastname)
+    newline_ch=$(echo $'\n')
+
+    if [[ "$curr_line" == "$newline_ch" ]]; then    # If line is empty just skip it
+        continue
+    fi
+
     name=$(echo $curr_line | cut -d ' ' -f 1,2)     # Extract first and second columnt (firstname and lastname)
 
     if [[ "${voters[$name]}" ]]; then   # Check for duplicates, if name has appeared continue the loop without 

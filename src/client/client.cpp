@@ -27,7 +27,13 @@ int main(int argc, char *argv[]) {
 
     // Pthread's info
     pthread_t voters[num_lines];
+    bool actual_votes[num_lines];   // Bool array that specifies if the line was just the '\n' character or an actual vote
     VoterArgs voter_args[num_lines];
+
+    // Assuming that all lines are not empty
+    for (int i = 0; i < num_lines; i++) {
+        actual_votes[i] = true;
+    }
 
     int input_fd = open(input_file_name.c_str(), O_RDONLY, 0666);
 
@@ -39,6 +45,13 @@ int main(int argc, char *argv[]) {
         // Read the current line from the file
         char *vote_tmp = new char[sizeof(char) * MAX_MSG_LENGTH], *vote = vote_tmp; // Keep the initial pointer in order to delete it correctly afterwards
         read_line_from_fd(input_fd, vote);
+
+        // If the line is empty, just skip the line and don't create thread (save also this info)
+        if (!strcmp(vote, "")) {
+            delete vote_tmp;
+            actual_votes[i] = false;
+            continue;
+        }
 
         // Extract the firstname of voter and update voter's arguments
         char *voter_firstname;
@@ -82,6 +95,10 @@ int main(int argc, char *argv[]) {
     }
 
     for (int i = 0; i < num_lines; i++) {
+        if (actual_votes[i] == false) { // If the line in the given input file was empty, there is no thread that has been created for it
+            continue;
+        }
+
         void *status;
         if (pthread_join(voters[i], (void **)&status) != 0) {
             perror("pthread join on clinet");

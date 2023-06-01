@@ -76,11 +76,6 @@ void read_line_from_fd(int fd, char *str) {
     do {
         read_safely(fd, ch, 1);
         str[str_index++] = ch[0];
-
-        if ((ch[0] == '\n' || ch[0] == '\r') && str_index == 1) {   // Skip new line at beginning
-            str_index--;
-            ch[0] = -1;
-        }
     } while (ch[0] != '\r' && ch[0] != '\n');
 
     // Special handling on return carriage character
